@@ -20,6 +20,7 @@ import * as vscode from 'vscode';
 import { logger } from './logger';
 import { DEFAULT_CONFIG, PlaywrightTestConfig, PlaywrightTest } from './playwrightTest';
 import { TestCase, TestFile, testData } from './testTree';
+import { PawDrawEditorProvider } from './pawDrawEditor';
 
 export const testControllers: vscode.TestController[] = [];
 export const testControllerEvents = new EventEmitter();
@@ -27,71 +28,74 @@ export const testControllerEvents = new EventEmitter();
 const configuration = vscode.workspace.getConfiguration();
 
 export async function activate(context: vscode.ExtensionContext) {
-  if (!vscode.workspace.workspaceFolders) {
-    vscode.window.showWarningMessage('Playwright Test only works when a folder is opened.');
-    return;
-  }
+  // if (!vscode.workspace.workspaceFolders) {
+  //   vscode.window.showWarningMessage('Playwright Test only works when a folder is opened.');
+  //   return;
+  // }
 
-  const debugModeHandler = new PlaywrightDebugMode(context);
+  // const debugModeHandler = new PlaywrightDebugMode(context);
 
-  const playwrightTestConfigsFromSettings = configuration.get<string[]>('playwright.configs');
-  const playwrightTestConfigs: PlaywrightTestConfig[] = playwrightTestConfigsFromSettings?.length ? playwrightTestConfigsFromSettings : [DEFAULT_CONFIG];
+  // const playwrightTestConfigsFromSettings = configuration.get<string[]>('playwright.configs');
+  // const playwrightTestConfigs: PlaywrightTestConfig[] = playwrightTestConfigsFromSettings?.length ? playwrightTestConfigsFromSettings : [DEFAULT_CONFIG];
 
-  const workspace2TestController = new Map<vscode.WorkspaceFolder, PlaywrightTestController[]>();
+  // const workspace2TestController = new Map<vscode.WorkspaceFolder, PlaywrightTestController[]>();
 
-  for (const workspaceFolder of vscode.workspace.workspaceFolders) {
-    let playwrightTest: PlaywrightTest;
-    try {
-      playwrightTest = await PlaywrightTest.create(workspaceFolder.uri.fsPath, configuration.get('playwright.cliPath')!, debugModeHandler);
-    } catch (error) {
-      logger.debug(error.toString());
-      return;
-    }
+	// Register our custom editor providers
+	context.subscriptions.push(PawDrawEditorProvider.register(context));
 
-    for (const [configIndex, config] of playwrightTestConfigs.entries()) {
-      const tests = await playwrightTest.listTests(config, '', '.');
-      if (!tests)
-        continue;
-      for (const [projectsIndex, project] of tests.config.projects.entries()) {
-        const isDefault = projectsIndex === 0 && configIndex === 0;
-        const controller = await createTestController(context, workspaceFolder, playwrightTest, config, project.name, projectsIndex, isDefault);
-        if (!workspace2TestController.has(workspaceFolder))
-          workspace2TestController.set(workspaceFolder, []);
-        workspace2TestController.get(workspaceFolder)?.push(controller);
-      }
-    }
-  }
+  // for (const workspaceFolder of vscode.workspace.workspaceFolders) {
+  //   let playwrightTest: PlaywrightTest;
+  //   try {
+  //     playwrightTest = await PlaywrightTest.create(workspaceFolder.uri.fsPath, configuration.get('playwright.cliPath')!, debugModeHandler);
+  //   } catch (error) {
+  //     logger.debug(error.toString());
+  //     return;
+  //   }
 
-  function updateNodeForDocument(e: vscode.TextDocument) {
-    if (!['.ts', '.js', '.mjs'].some(extension => e.uri.fsPath.endsWith(extension))) {
-      return;
-    }
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(e.uri);
-    if (!workspaceFolder)
-      return;
+  //   for (const [configIndex, config] of playwrightTestConfigs.entries()) {
+  //     const tests = await playwrightTest.listTests(config, '', '.');
+  //     if (!tests)
+  //       continue;
+  //     for (const [projectsIndex, project] of tests.config.projects.entries()) {
+  //       const isDefault = projectsIndex === 0 && configIndex === 0;
+  //       const controller = await createTestController(context, workspaceFolder, playwrightTest, config, project.name, projectsIndex, isDefault);
+  //       if (!workspace2TestController.has(workspaceFolder))
+  //         workspace2TestController.set(workspaceFolder, []);
+  //       workspace2TestController.get(workspaceFolder)?.push(controller);
+  //     }
+  //   }
+  // }
 
-    const testControllers = workspace2TestController.get(workspaceFolder);
-    if (!testControllers)
-      return;
+  // function updateNodeForDocument(e: vscode.TextDocument) {
+  //   if (!['.ts', '.js', '.mjs'].some(extension => e.uri.fsPath.endsWith(extension))) {
+  //     return;
+  //   }
+  //   const workspaceFolder = vscode.workspace.getWorkspaceFolder(e.uri);
+  //   if (!workspaceFolder)
+  //     return;
+
+  //   const testControllers = workspace2TestController.get(workspaceFolder);
+  //   if (!testControllers)
+  //     return;
     
-    for (const [, {config, projectName, controller, playwrightTest}] of testControllers.entries()) {
-      playwrightTest.listTests(config, projectName, e.uri.fsPath).then(tests => {
-        if (!tests)
-          return;
-        const { file, data } = getOrCreateFile(controller, workspaceFolder, e.uri, playwrightTest, config, projectName);
-        data.updateFromDisk(controller, file, tests);
-      }).catch(error => logger.debug(error));
-    }
-  }
+  //   for (const [, {config, projectName, controller, playwrightTest}] of testControllers.entries()) {
+  //     playwrightTest.listTests(config, projectName, e.uri.fsPath).then(tests => {
+  //       if (!tests)
+  //         return;
+  //       const { file, data } = getOrCreateFile(controller, workspaceFolder, e.uri, playwrightTest, config, projectName);
+  //       data.updateFromDisk(controller, file, tests);
+  //     }).catch(error => logger.debug(error));
+  //   }
+  // }
 
-  for (const document of vscode.workspace.textDocuments) {
-    updateNodeForDocument(document);
-  }
+  // for (const document of vscode.workspace.textDocuments) {
+  //   updateNodeForDocument(document);
+  // }
 
-  context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
-    vscode.workspace.onDidSaveTextDocument(updateNodeForDocument)
-  );
+  // context.subscriptions.push(
+  //   vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
+  //   vscode.workspace.onDidSaveTextDocument(updateNodeForDocument)
+  // );
 }
 
 type PlaywrightTestController = {

@@ -19,10 +19,23 @@
 	],
 	"activationEvents": [
 		"workspaceContains:playwright.config.{ts,js}",
-		"workspaceContains:**/*.{test,spec}.{ts,js,mjs}"
+		"workspaceContains:**/*.{test,spec}.{ts,js,mjs}",
+		"onCustomEditor:catCustoms.pawDraw"
 	],
+	
 	"main": "./out/extension.js",
 	"contributes": {
+		"customEditors": [
+			{
+				"viewType": "catCustoms.pawDraw",
+				"displayName": "Paw Draw",
+				"selector": [
+					{
+						"filenamePattern": "*.pwtrace"
+					}
+				]
+			}
+		],
 		"configuration": {
 			"title": "Playwright Test path",
 			"properties": {

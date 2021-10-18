@@ -17,14 +17,15 @@
 import { PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
+  use: {
+    trace: 'retain-on-failure'
+  },
   projects: [
     {
       name: 'Chromium',
       use: {
         // Configure the browser to use.
         browserName: 'chromium',
-        // Any Chromium-specific options.
-        viewport: { width: 600, height: 800 },
       },
     },
     {
